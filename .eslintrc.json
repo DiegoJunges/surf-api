@@ -24,6 +24,8 @@
   ],
   "rules": {
     "@typescript-eslint/no-var-requires": 0,
+    "class-methods-use-this": "off",
+    "import/prefer-default-export": "off",
     "import/no-dynamic-require": "off",
     "prettier/prettier": "error",
     "import/extensions": [
