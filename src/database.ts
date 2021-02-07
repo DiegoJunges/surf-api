@@ -10,4 +10,4 @@ export const connect = async (): Promise<Mongoose> =>
     useUnifiedTopology: true,
   });
 
-  export const close = (): Promise<void> => mongoose.connection.close();
+export const close = (): Promise<void> => mongoose.connection.close();
