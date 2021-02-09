@@ -16,7 +16,6 @@ describe('Forecast Service', () => {
         lng: 151.289824,
         name: 'Manly',
         position: BeachPosition.E,
-        user: 'some-id',
       },
     ];
     const expectedResponse = [
@@ -99,16 +98,15 @@ describe('Forecast Service', () => {
         lng: 151.289824,
         name: 'Manly',
         position: BeachPosition.E,
-        user: 'some-id',
       },
     ];
 
     mockedStormGlassService.fetchPoints.mockRejectedValue(
       'Error fetching data'
     );
-      const forecast = new Forecast(mockedStormGlassService);
-      await expect(forecast.processForecastForBeaches(beaches)).rejects.toThrow(
-        forecastProcessingInternalError
-      );
+    const forecast = new Forecast(mockedStormGlassService);
+    await expect(forecast.processForecastForBeaches(beaches)).rejects.toThrow(
+      forecastProcessingInternalError
+    );
   })
 });
