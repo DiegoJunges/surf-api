@@ -1,10 +1,12 @@
 import { Controller, Post } from '@overnightjs/core';
 import { User } from '@src/models/user';
+import AuthService from '@src/services/auth';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { BaseController } from './index';
 
 @Controller('users')
-export class UsersController {
+export class UsersController extends BaseController{
   @Post('')
   public async create(req: Request, res: Response): Promise<void> {
     try {
@@ -12,11 +14,37 @@ export class UsersController {
       const newUser = await user.save();
       res.status(201).send(newUser);
     } catch (error) {
-      if(error instanceof mongoose.Error.ValidationError) {
-        res.status(422).send({error: error.message});
-      } else {
-        res.status(500).send({error: 'Internal server Error'});
-      }
+      this.sendCreateUpdateErrorResponse(res, error);
+      // if(error instanceof mongoose.Error.ValidationError) {
+      //   res.status(422).send({ code: 422, error: error.message});
+      // }
+      // if (error instanceof mongoose.Error.ValidationError) {
+      //   res.status(500).send({error: 'Internal server Error'});
+      // }
     }
+  }
+
+  @Post('authenticate')
+  public async authenticate(
+    req: Request,
+    res: Response
+  ): Promise<Response | undefined> {
+    const { email, password } = req.body
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).send({
+        code: 401,
+        error: 'User not found!'
+      });
+    }
+    if(!(await AuthService.comparePasswords(password, user.password))) {
+      return res.status(401).send({
+        code: 401,
+        error: 'Password does not match!',
+      });
+    }
+
+    const token = AuthService.generateToken(user.toJSON());
+    return res.status(200).send({ token: 'fake-token' });
   }
 }
