@@ -4,7 +4,7 @@ import AuthService from '@src/services/auth';
 export function authMiddleware(
   req: Partial<Request>,
   res: Partial<Response>,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   const token = req.headers?.['x-access-token'];
   try {

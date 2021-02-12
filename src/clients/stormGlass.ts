@@ -1,6 +1,7 @@
 import { InternalError } from '@src/util/errors/internal-error';
 import config, { IConfig } from 'config';
 import * as HTTPUtil from '@src/util/request';
+import { TimeUtil } from '@src/util/time';
 
 export interface StormGlassPointSource {
   [key: string]: number;
@@ -49,7 +50,7 @@ export class ClientRequestError extends InternalError {
   constructor(message: string) {
     const InternalMessage =
       'Unexpected error when trying to communicate to StormGlass';
-    super(`${InternalMessage}: ${message}`)
+    super(`${InternalMessage}: ${message}`);
   }
 }
 
@@ -65,37 +66,39 @@ export class StormGlassResponseError extends InternalError {
  * We could have proper type for the configuration
  */
 const stormglassResourceConfig: IConfig = config.get(
-  'App.resources.StormGlass'
+  'App.resources.StormGlass',
 );
 
 export class StormGlass {
   readonly stormGlassAPIParams =
     'swellDirection,swellHeight,swellPeriod,waveDirection,waveHeight,windDirection,windSpeed';
+
   readonly stormGlassAPISource = 'noaa';
 
   constructor(protected request = new HTTPUtil.Request()) {}
 
   public async fetchPoints(lat: number, lng: number): Promise<ForecastPoint[]> {
-    try{
-    const response = await this.request.get<StormGlassForecastResponse>(
-      `${stormglassResourceConfig.get(
-        'apiUrl'
-      )}/weather/point?lat=${lat}&lng=${lng}&params=${
-        this.stormGlassAPIParams
-      }&source=${this.stormGlassAPISource}`,
-      {
-        headers: {
-          Authorization: stormglassResourceConfig.get('apiToken'),
+    const endTimeStamp = TimeUtil.getUnixTimeForAFutureDay(1);
+    try {
+      const response = await this.request.get<StormGlassForecastResponse>(
+        `${stormglassResourceConfig.get(
+          'apiUrl',
+        )}/weather/point?lat=${lat}&lng=${lng}&params=${
+          this.stormGlassAPIParams
+        }&source=${this.stormGlassAPISource}&end=${endTimeStamp}`,
+        {
+          headers: {
+            Authorization: stormglassResourceConfig.get('apiToken'),
+          },
         },
-      }
-    );
-    return this.normalizeResponse(response.data);
-    }catch(err) {
-      if(HTTPUtil.Request.isRequestError(err)) {
+      );
+      return this.normalizeResponse(response.data);
+    } catch (err) {
+      if (HTTPUtil.Request.isRequestError(err)) {
         throw new StormGlassResponseError(
           `Error: ${JSON.stringify(err.response.data)} Code: ${
             err.response.status
-          }`
+          }`,
         );
       }
       throw new ClientRequestError(err.message);
@@ -103,9 +106,9 @@ export class StormGlass {
   }
 
   private normalizeResponse(
-    points: StormGlassForecastResponse
+    points: StormGlassForecastResponse,
   ): ForecastPoint[] {
-    return points.hours.filter(this.isValidPoint.bind(this)).map((point) => ({
+    return points.hours.filter(this.isValidPoint.bind(this)).map(point => ({
       swellDirection: point.swellDirection[this.stormGlassAPISource],
       swellHeight: point.swellHeight[this.stormGlassAPISource],
       swellPeriod: point.swellPeriod[this.stormGlassAPISource],

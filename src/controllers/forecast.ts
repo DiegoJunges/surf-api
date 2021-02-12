@@ -1,25 +1,38 @@
-import { ClassMiddleware, Controller, Get } from '@overnightjs/core';
-import { authMiddleware } from '@src/middlewares/auth';
+import {
+  Controller,
+  Get,
+  ClassMiddleware,
+  Middleware,
+} from '@overnightjs/core';
+import { Request, Response } from 'express';
 import { Beach } from '@src/models/beach';
 import { Forecast } from '@src/services/forecast';
-import { Request, Response } from 'express';
+import { authMiddleware } from '@src/middlewares/auth';
+import logger from '@src/logger';
+import rateLimiter from '@src/middlewares/rateLimiter';
+import { BaseController } from '.';
 
 const forecast = new Forecast();
 
 @Controller('forecast')
 @ClassMiddleware(authMiddleware)
-export class ForecastController {
+export class ForecastController extends BaseController {
   @Get('')
+  @Middleware(rateLimiter)
   public async getForecastForgeLoggedUser(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
-      const beaches = await Beach.find({user: req.decoded?.id});
+      const beaches = await Beach.find({ user: req.decoded?.id });
       const forecastData = await forecast.processForecastForBeaches(beaches);
       res.status(200).send(forecastData);
     } catch (error) {
-      res.status(500).send({ error: 'Something went wrong' });
+      logger.error(error);
+      this.sendErrorResponse(res, {
+        code: 500,
+        message: 'Something went wrong',
+      });
     }
   }
 }
