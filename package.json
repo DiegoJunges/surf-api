@@ -13,7 +13,7 @@
     "start:local": "ts-node-dev 'src/index.ts'",
     "test:functional": "jest --projects ./test --runInBand",
     "test:unit": "jest",
-    "test": "yarn test:unit && yarn test:functional"
+    "test:all": "yarn test:unit && yarn test:functional"
   },
   "author": "Diego Junges <diegojunges@hotmail.com>",
   "license": "MIT",
